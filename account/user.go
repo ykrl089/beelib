@@ -1,9 +1,10 @@
 package account
 
 import (
-	"fmt"
 	"github.com/astaxie/beego/orm"
 	"github.com/wayn3h0/go-uuid"
+	_ "github.com/ykrl089/beelib/library/md5"
+	_ "github.com/ykrl089/beelib/library/str"
 	"time"
 )
 
