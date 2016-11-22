@@ -12,16 +12,16 @@ type User struct {
 	Id            int64
 	CreatedAt     time.Time `orm:"auto_now_add;type(datetime)"  json:"createdAt"`
 	ModifiedAt    time.Time `orm:"null;type(datetime)"  json:"modifiedAt"`
-	Username      string    `orm:"size(16);unique" form:"Username" json:"username"`
+	Username      string    `orm:"size(16);unique;index" form:"Username" json:"username"`
 	PasswordPlain string    `orm:"-" form:"Password" json:"-"`
 	PasswordCript string    `orm:"size(64);"  json:"-"`
 	LoginToken    string    `orm:"null;size(32)" form:"LoginToken" json:"loginToken"`
 	ExpiredAt     time.Time `orm:"null;type(datetime)"  json:"expiredAt"`
-	Uuid          string    `orm:"size(36);unique" json:"uuid"`
+	Uuid          string    `orm:"size(36);unique;index" json:"uuid"`
 	Salt          string    `orm:"size(18)" json:"-"`
 	Nickname      string    `orm:"size(18)" form:"Nickname" json:"nickname"`
-	Icon          string    `orm:"size(256)" form:"Icon" json:"icon"`
-	Email         string    `orm:"size(256)" form:"Email" json:"email"`
+	HeadIcon      string    `orm:"size(256)" form:"HeadIcon" json:"headIcon"`
+	Email         string    `orm:"size(256);index" form:"Email" json:"email"`
 	Role          string    `orm:"size(64)" json:"role"`
 }
 
@@ -32,11 +32,7 @@ func init() {
 func (this *User) TableName() string {
 	return "users"
 }
-func (this *User) TableIndex() [][]string {
-	return [][]string{
-		[]string{"Id", "Username", "Uuid"},
-	}
-}
+
 func (this *User) Login() error {
 	if err = this.Get(); err != nil {
 		if err == orm.ErrNoRows {
