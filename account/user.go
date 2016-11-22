@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"github.com/astaxie/beego/orm"
 	"github.com/wayn3h0/go-uuid"
 	"time"
