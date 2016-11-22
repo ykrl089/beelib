@@ -16,6 +16,7 @@ type Profile struct {
 	City       string    `orm:"null;size(64)" form:"City" json:"city"`
 	Email      string    `orm:"null;size(256)" form:"Email" json:"email"`
 	Dob        time.Time `orm:"null;type(date)" form:"Dob" json:"dob"`
+	User       *User     `orm:"reverse(one)"`
 }
 
 func init() {
