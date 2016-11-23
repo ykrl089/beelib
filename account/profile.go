@@ -14,7 +14,6 @@ type Profile struct {
 	Gender     string    `orm:"null;size(16)" form:"Gender" json:"gender"`
 	Address    string    `orm:"null;size(256)" form:"Address" json:"address"`
 	City       string    `orm:"null;size(64)" form:"City" json:"city"`
-	Email      string    `orm:"null;size(256)" form:"Email" json:"email"`
 	Dob        time.Time `orm:"null;type(date)" form:"Dob" json:"dob"`
 	User       *User     `orm:"reverse(one)"`
 }
@@ -25,4 +24,16 @@ func init() {
 
 func (this *Profile) TableName() string {
 	return "user_profiles"
+}
+func (this *Profile) Create() error {
+	_, err := orm.NewOrm().Insert(this)
+	return err
+}
+func (this *Profile) Update(fields ...string) error {
+	if this.Id <= 0 {
+		return error.New("ID错误，无法更新")
+	}
+	this.ModifiedAt = time.Now()
+	_, err := orm.NewOrm().Update(this, fields...)
+	return err
 }

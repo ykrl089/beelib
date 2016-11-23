@@ -13,18 +13,19 @@ import (
 )
 
 const (
-	PasswordError = "密码错误"
-	ForBiddenUser = "禁用用户"
-	LoginSuccess  = "用户登录成功"
+	StatusInit    = 300
+	PasswordError = 401
+	ForBiddenUser = 400
+	ErrorReset    = 200
+	LoginSuccess  = 100
 )
 
 type Log struct {
 	Id        int64
 	CreatedAt time.Time `orm:"auto_now_add;type(datetime)"  json:"createdAt"`
 	Ip        string    `orm:"size(16)"`
-	Message   string    `orm:"null;size(1024)"`
 	User      *User     `orm:"rel(fk)"`
-	Status    bool      `orm:"default(1)"`
+	Status    int       `orm:"default(300)"`
 }
 
 func init() {
@@ -40,6 +41,6 @@ func (this *Log) Create() error {
 	return err
 }
 func (this *Log) List(startAt time.Time, uid int64) (logs []*Log) {
-	orm.NewOrm().QueryTable(this).Filter("User__Id", uid).Filter("CreatedAt__gte", startAt).OrderBy("-CreatedAt").Limit(100).All(logs)
+	orm.NewOrm().QueryTable(this).Filter("User__Id", uid).Filter("CreatedAt__gte", startAt).OrderBy("-CreatedAt").Limit(10).All(logs)
 	return
 }
