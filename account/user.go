@@ -1,11 +1,12 @@
 package account
 
 import (
-	"github.com/astaxie/beego"
+	"errors"
+	"fmt"
 	"github.com/astaxie/beego/orm"
 	"github.com/wayn3h0/go-uuid"
-	_ "github.com/ykrl089/beelib/library/md5"
-	_ "github.com/ykrl089/beelib/library/str"
+	"github.com/ykrl089/beelib/library/md5"
+	"github.com/ykrl089/beelib/library/str"
 	"time"
 )
 
@@ -24,7 +25,7 @@ type User struct {
 	HeadIcon      string    `orm:"null;size(256)" form:"HeadIcon" json:"headIcon"`
 	Email         string    `orm:"null;size(256);index" form:"Email" json:"email"`
 	Role          string    `orm:"null;size(64)" json:"role"`
-	Profile       *Profile  `orm:"null;rel(one)"`
+	Profile       *Profile  `orm:"null;rel(one);on_delete(set_null)"`
 }
 
 var (
@@ -43,11 +44,15 @@ func (this *User) TableName() string {
 }
 
 func (this *User) Login(ip string) error {
-	if err = this.Get(); err != nil {
+	password := this.PasswordPlain
+	if password == "" {
+		return errors.New("未输入密码")
+	}
+	if err := this.Get(); err != nil {
 		if err == orm.ErrNoRows {
-			return error.New("查询不到")
+			return errors.New("查询不到")
 		} else if err == orm.ErrMissPK {
-			return error.New("找不到对应的ID")
+			return errors.New("找不到对应的ID")
 		}
 	}
 
@@ -56,19 +61,21 @@ func (this *User) Login(ip string) error {
 		User: this,
 	}
 	if ok := loginLog.ErrorCountLimitedInHour(this.Id, 5); !ok {
-		return error.New("登录错误次数超限，请联系管理员")
+		return errors.New("登录错误次数超限，请联系管理员")
 	}
-	if MD5(MD5(this.PasswordPlain)+this.Salt) == this.PasswordCript {
+	fmt.Println("userpassword", this.PasswordPlain)
+	if md5.MD5(md5.MD5(password)+this.Salt) == this.PasswordCript {
 		loginLog.Status = LoginSuccess
-		this.LoginToken = RanStr(32)
-		this.ExpiredAt = time.Now.Add(720 * time.Hour) //30天过期
+		this.LoginToken = str.RanStr(32)
+		this.ExpiredAt = time.Now().Add(720 * time.Hour) //30天过期
+		loginLog.Create()
 		return this.Update("LoginToken", "ExpiredAt")
 	} else {
 		loginLog.Status = PasswordError
-		return error.New("密码错误")
+		loginLog.Create()
+		return errors.New("密码错误")
 	}
-	loginLog.Create()
-	return err
+
 }
 
 func (this *User) Get() error {
@@ -82,49 +89,53 @@ func (this *User) Get() error {
 	} else if this.Email != "" {
 		return o.Read(this, "Email")
 	} else {
-		return Error.New("无效查询，请输入ID，Username、UUID或者Email")
+		return errors.New("无效查询，请输入ID，Username、UUID或者Email")
 	}
 
 }
 func (this *User) Update(fields ...string) error {
 	o := orm.NewOrm()
 	if this.Id <= 0 {
-		return error.New("ID错误")
+		return errors.New("ID错误")
 	}
-	_, err := o.Update(this, fields...)
-	return error.New("更新失败")
+	if _, err := o.Update(this, fields...); err != nil {
+		return errors.New("更新失败")
+	} else {
+		return nil
+	}
 }
 func (this *User) Create() error {
 	o := orm.NewOrm()
 	if this.Id > 0 {
-		return error.New("无法创建已有主键的用户")
+		return errors.New("无法创建已有主键的用户")
 	}
 	if len(this.PasswordPlain) < 6 {
-		return error.New("密码长度过短")
+		return errors.New("密码长度过短")
 	}
 	if this.Username == "" && this.Email == "" {
-		return error.New("未设置用户名和Email地址")
+		return errors.New("未设置用户名和Email地址")
 	}
-	this.Salt = RandStr(18)
-	this.PasswordCript = MD5(MD5(this.PasswordPlain) + this.Salt)
+	this.Salt = str.RanStr(18)
+	this.PasswordCript = md5.MD5(md5.MD5(this.PasswordPlain) + this.Salt)
+	uuidv4, _ := uuid.NewV4()
 	this.Uuid = uuidv4.String()
 	if _, err := o.Insert(this); err != nil {
-		return error.New("创建失败")
+		return errors.New("创建失败")
 	}
 	return nil
 
 }
 func (this *User) Current() error {
 	if len(this.LoginToken) != 32 {
-		return error.New("Token 错误，请重新登录")
+		return errors.New("Token 错误，请重新登录")
 	}
 	o := orm.NewOrm()
 	if err := o.Read(this, "LoginToken"); err == orm.ErrNoRows {
-		return error.New("您已丢失登录信息或登出，请重新登录")
+		return errors.New("您已丢失登录信息或登出，请重新登录")
 	} else {
-		if this.ExpiredAt > time.Now() {
-			this.Logout()
-			return error.New("用户登录已过期，请重新登录")
+		if !time.Now().Before(this.ExpiredAt) {
+			this.Logout("")
+			return errors.New("用户登录已过期，请重新登录")
 		} else {
 			return nil
 		}
@@ -144,4 +155,15 @@ func (this *User) Logout(ip string) {
 		Status: LogoutSuccess,
 	}
 	loginLog.Create()
+}
+func (this *User) Delete() error {
+	if this.Id <= 0 {
+		return errors.New("ID错误,删除失败")
+	}
+
+	if _, err := orm.NewOrm().Delete(this); err == nil {
+		return nil
+	} else {
+		return err
+	}
 }

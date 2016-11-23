@@ -1,6 +1,7 @@
 package account
 
 import (
+	"errors"
 	"github.com/astaxie/beego/orm"
 	"time"
 )
@@ -31,7 +32,7 @@ func (this *Profile) Create() error {
 }
 func (this *Profile) Update(fields ...string) error {
 	if this.Id <= 0 {
-		return error.New("ID错误，无法更新")
+		return errors.New("ID错误，无法更新")
 	}
 	this.ModifiedAt = time.Now()
 	_, err := orm.NewOrm().Update(this, fields...)

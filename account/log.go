@@ -2,7 +2,7 @@
 * @Author: GuoDi
 * @Date:   2016-11-23 00:57:49
 * @Last Modified by:   GuoDi
-* @Last Modified time: 2016-11-23 21:57:43
+* @Last Modified time: 2016-11-23 23:19:47
  */
 
 package account
@@ -24,7 +24,7 @@ const (
 type Log struct {
 	Id        int64
 	CreatedAt time.Time `orm:"auto_now_add;type(datetime)"  json:"createdAt"`
-	Ip        string    `orm:"size(16)"`
+	Ip        string    `null;orm:"size(16)"`
 	User      *User     `orm:"rel(fk)"`
 	Status    int       `orm:"default(300)"`
 }
@@ -48,7 +48,7 @@ func (this *Log) Create() error {
 }
 
 func (this *Log) List(startAt time.Time, uid int64) (logs []*Log) {
-	orm.NewOrm().QueryTable(this).Filter("User__Id", uid).Filter("CreatedAt__gte", startAt).OrderBy("-CreatedAt").Limit(10).All(logs)
+	orm.NewOrm().QueryTable(this).Filter("User__Id", uid).Filter("CreatedAt__lte", startAt).OrderBy("-CreatedAt").Limit(10).All(&logs)
 	return
 }
 func (this *Log) ErrorCountLimitedInHour(uid int64, countLimit int) bool {
@@ -69,4 +69,5 @@ func (this *Log) ErrorCountLimitedInHour(uid int64, countLimit int) bool {
 			return true
 		}
 	}
+	return true
 }
