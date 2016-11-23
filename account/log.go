@@ -2,7 +2,7 @@
 * @Author: GuoDi
 * @Date:   2016-11-23 00:57:49
 * @Last Modified by:   GuoDi
-* @Last Modified time: 2016-11-23 18:04:46
+* @Last Modified time: 2016-11-23 21:57:43
  */
 
 package account
@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	ErrorDefault  = 500
 	PasswordError = 400
 	ForBiddenUser = 401
-	LoginSuccess  = 200
-	ResetSuccess  = 201
+	StatusInit    = 300
+	ResetSuccess  = 200
+	LogoutSuccess = 102
+	LoginSuccess  = 100
 )
 
 type Log struct {
@@ -37,8 +38,13 @@ func (this *Log) TableName() string {
 }
 
 func (this *Log) Create() error {
-	_, err := orm.NewOrm().Insert(this)
-	return err
+	if EnableLog {
+		_, err := orm.NewOrm().Insert(this)
+		return err
+	} else {
+		return nil
+	}
+
 }
 
 func (this *Log) List(startAt time.Time, uid int64) (logs []*Log) {
@@ -46,6 +52,9 @@ func (this *Log) List(startAt time.Time, uid int64) (logs []*Log) {
 	return
 }
 func (this *Log) ErrorCountLimitedInHour(uid int64, countLimit int) bool {
+	if !EnableLog {
+		return true
+	}
 	hour, _ := time.ParseDuration("-1h")
 	hourBefore := time.Now().Add(hour)
 	logs := this.List(hourBefore, uid)

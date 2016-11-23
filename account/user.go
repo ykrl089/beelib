@@ -1,6 +1,7 @@
 package account
 
 import (
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/wayn3h0/go-uuid"
 	_ "github.com/ykrl089/beelib/library/md5"
@@ -41,7 +42,7 @@ func (this *User) TableName() string {
 	return "users"
 }
 
-func (this *User) Login() error {
+func (this *User) Login(ip string) error {
 	if err = this.Get(); err != nil {
 		if err == orm.ErrNoRows {
 			return error.New("查询不到")
@@ -49,14 +50,25 @@ func (this *User) Login() error {
 			return error.New("找不到对应的ID")
 		}
 	}
+
+	loginLog := Log{
+		Ip:   ip,
+		User: this,
+	}
+	if ok := loginLog.ErrorCountLimitedInHour(this.Id, 5); !ok {
+		return error.New("登录错误次数超限，请联系管理员")
+	}
 	if MD5(MD5(this.PasswordPlain)+this.Salt) == this.PasswordCript {
+		loginLog.Status = LoginSuccess
 		this.LoginToken = RanStr(32)
 		this.ExpiredAt = time.Now.Add(720 * time.Hour) //30天过期
 		return this.Update("LoginToken", "ExpiredAt")
 	} else {
+		loginLog.Status = PasswordError
 		return error.New("密码错误")
 	}
-
+	loginLog.Create()
+	return err
 }
 
 func (this *User) Get() error {
@@ -108,18 +120,28 @@ func (this *User) Current() error {
 	}
 	o := orm.NewOrm()
 	if err := o.Read(this, "LoginToken"); err == orm.ErrNoRows {
-		return error.New("Token 错误，请重新登录")
+		return error.New("您已丢失登录信息或登出，请重新登录")
 	} else {
 		if this.ExpiredAt > time.Now() {
-			this.Logout
+			this.Logout()
 			return error.New("用户登录已过期，请重新登录")
 		} else {
 			return nil
 		}
 	}
 }
-func (this *User) Logout() {
+func (this *User) Logout(ip string) {
+	if this.Id <= 0 {
+		return
+	}
+
 	this.LoginToken = ""
 	this.ExpiredAt = time.Now()
 	this.Update("LoginToken", "ExpiredAt")
+	loginLog := Log{
+		Ip:     ip,
+		User:   this,
+		Status: LogoutSuccess,
+	}
+	loginLog.Create()
 }
