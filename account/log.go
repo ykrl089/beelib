@@ -44,3 +44,19 @@ func (this *Log) List(startAt time.Time, uid int64) (logs []*Log) {
 	orm.NewOrm().QueryTable(this).Filter("User__Id", uid).Filter("CreatedAt__gte", startAt).OrderBy("-CreatedAt").Limit(10).All(logs)
 	return
 }
+func (this *Log) ErrorCountLimitedInHour(uid int64, countLimit int) bool {
+	hour, _ := time.ParseDuration("-1h")
+	hourBefore := time.Now().Add(hour)
+	logs := this.List(hourBefore, uid)
+	if count := len(logs); count <= 0 {
+		return true
+	}
+	for i, log := range logs {
+		if i == countLimit {
+			return false
+		}
+		if log.Status <= 200 {
+			return true
+		}
+	}
+}
