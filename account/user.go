@@ -26,8 +26,15 @@ type User struct {
 	Profile       *Profile  `orm:"null;rel(one)"`
 }
 
+var (
+	EnableLog   bool
+	EnableCache bool
+)
+
 func init() {
 	orm.RegisterModel(new(User))
+	EnableLog = false
+	EnableCache = true
 }
 
 func (this *User) TableName() string {

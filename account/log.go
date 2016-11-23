@@ -2,7 +2,7 @@
 * @Author: GuoDi
 * @Date:   2016-11-23 00:57:49
 * @Last Modified by:   GuoDi
-* @Last Modified time: 2016-11-23 02:38:44
+* @Last Modified time: 2016-11-23 18:04:46
  */
 
 package account
@@ -24,9 +24,8 @@ type Log struct {
 	Id        int64
 	CreatedAt time.Time `orm:"auto_now_add;type(datetime)"  json:"createdAt"`
 	Ip        string    `orm:"size(16)"`
-	Message   string    `orm:"null;size(1024)"`
 	User      *User     `orm:"rel(fk)"`
-	Status    int       `orm:"default(100)"`
+	Status    int       `orm:"default(300)"`
 }
 
 func init() {
@@ -41,7 +40,24 @@ func (this *Log) Create() error {
 	_, err := orm.NewOrm().Insert(this)
 	return err
 }
-func (this *Log) ListByUser(startAt time.Time, uid int64) (logs []*Log) {
+
+func (this *Log) List(startAt time.Time, uid int64) (logs []*Log) {
 	orm.NewOrm().QueryTable(this).Filter("User__Id", uid).Filter("CreatedAt__gte", startAt).OrderBy("-CreatedAt").Limit(10).All(logs)
 	return
+}
+func (this *Log) ErrorCountLimitedInHour(uid int64, countLimit int) bool {
+	hour, _ := time.ParseDuration("-1h")
+	hourBefore := time.Now().Add(hour)
+	logs := this.List(hourBefore, uid)
+	if count := len(logs); count <= 0 {
+		return true
+	}
+	for i, log := range logs {
+		if i == countLimit {
+			return false
+		}
+		if log.Status <= 200 {
+			return true
+		}
+	}
 }
