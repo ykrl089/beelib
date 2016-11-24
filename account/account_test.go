@@ -9,6 +9,7 @@ package account
 
 import (
 	"fmt"
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ykrl089/beelib/library/str"
@@ -37,7 +38,7 @@ func Test_Create_User(t *testing.T) {
 func Test_Login_User(t *testing.T) {
 	fmt.Println("-------", "Test_Login_User", "------")
 	usr := User{Username: "guodi", PasswordPlain: "aaaaaaa"}
-	if err := usr.Login("192.168.1.8"); err != nil {
+	if err := usr.Login(); err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(usr)
@@ -46,7 +47,7 @@ func Test_Login_User(t *testing.T) {
 func Test_Get_Login_User(t *testing.T) {
 	fmt.Println("-------", "Test_Get_Login_User", "------")
 	usr := User{Username: "guodi", PasswordPlain: "aaaaaaa"}
-	if err := usr.Login("192.168.1.8"); err != nil {
+	if err := usr.Login(); err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(usr)
