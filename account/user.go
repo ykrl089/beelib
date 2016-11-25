@@ -21,7 +21,7 @@ type User struct {
 	ExpiredAt     time.Time `orm:"null;type(datetime)"  json:"expiredAt"`
 	Uuid          string    `orm:"size(36);unique;index" json:"uuid"`
 	Salt          string    `orm:"size(18)" json:"-"`
-	IP            string    `orm:"-"`
+	IP            string    `orm:"-"` // 用户登录IP
 	Nickname      string    `orm:"null;size(18)" form:"Nickname" json:"nickname"`
 	HeadIcon      string    `orm:"null;size(256)" form:"HeadIcon" json:"headIcon"`
 	Email         string    `orm:"null;size(256);index" form:"Email" json:"email"`
