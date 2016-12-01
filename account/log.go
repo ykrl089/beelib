@@ -71,3 +71,8 @@ func (this *Log) ErrorCountLimitedInHour(uid int64, countLimit int) bool {
 	}
 	return true
 }
+func (this *Log) ResetSuccessLog(usr User) {
+	this.Status = ResetSuccess
+	this.User = &usr
+	this.Create()
+}

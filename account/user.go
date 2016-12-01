@@ -21,6 +21,7 @@ type User struct {
 	ExpiredAt     time.Time `orm:"null;type(datetime)"  json:"expiredAt"`
 	Uuid          string    `orm:"size(36);unique;index" json:"uuid"`
 	Salt          string    `orm:"size(18)" json:"-"`
+	IP            string    `orm:"-"` // 用户登录IP
 	Nickname      string    `orm:"null;size(18)" form:"Nickname" json:"nickname"`
 	HeadIcon      string    `orm:"null;size(256)" form:"HeadIcon" json:"headIcon"`
 	Email         string    `orm:"null;size(256);index" form:"Email" json:"email"`
@@ -43,7 +44,7 @@ func (this *User) TableName() string {
 	return "users"
 }
 
-func (this *User) Login(ip string) error {
+func (this *User) Login() error {
 	password := this.PasswordPlain
 	if password == "" {
 		return errors.New("未输入密码")
@@ -57,7 +58,7 @@ func (this *User) Login(ip string) error {
 	}
 
 	loginLog := Log{
-		Ip:   ip,
+		Ip:   this.IP,
 		User: this,
 	}
 	if ok := loginLog.ErrorCountLimitedInHour(this.Id, 5); !ok {
@@ -134,14 +135,14 @@ func (this *User) Current() error {
 		return errors.New("您已丢失登录信息或登出，请重新登录")
 	} else {
 		if !time.Now().Before(this.ExpiredAt) {
-			this.Logout("")
+			this.Logout()
 			return errors.New("用户登录已过期，请重新登录")
 		} else {
 			return nil
 		}
 	}
 }
-func (this *User) Logout(ip string) {
+func (this *User) Logout() {
 	if this.Id <= 0 {
 		return
 	}
@@ -150,7 +151,7 @@ func (this *User) Logout(ip string) {
 	this.ExpiredAt = time.Now()
 	this.Update("LoginToken", "ExpiredAt")
 	loginLog := Log{
-		Ip:     ip,
+		Ip:     this.IP,
 		User:   this,
 		Status: LogoutSuccess,
 	}
