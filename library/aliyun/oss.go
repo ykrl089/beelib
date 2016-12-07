@@ -15,20 +15,20 @@ import (
 
 var (
 	client                                             *oss.Client
-	Endpoint, AccessKeyID, AccessKeySecret, BucketName string
+	endpoint, accessKeyID, accessKeySecret, bucketName string
 )
 
 func init() {
-	Endpoint = beego.AppConfig.String("aliyun_endpoint")
-	AccessKeyID = beego.AppConfig.String("aliyun_access_key_id")
-	AccessKeySecret = beego.AppConfig.String("aliyun_access_key_secret")
-	BucketName = beego.AppConfig.String("aliyun_oss_bucket_name")
+	endpoint = beego.AppConfig.String("aliyun_endpoint")
+	accessKeyID = beego.AppConfig.String("aliyun_access_key_id")
+	accessKeySecret = beego.AppConfig.String("aliyun_access_key_secret")
+	bucketName = beego.AppConfig.String("aliyun_oss_bucket_name")
 	if err := SetClient(); err != nil {
 		fmt.Println("oss warning:", err.Error())
 	}
 }
 func SetClient() error {
-	if client, err = oss.New(Endpoint, AccessKeyID, AccessKeySecret); err != nil {
+	if client, err = oss.New(endpoint, accessKeyID, accessKeySecret); err != nil {
 		return err
 	} else {
 		return nil
@@ -36,7 +36,7 @@ func SetClient() error {
 }
 func GetBucket(name string) *oss.Bucket {
 	if name == "" {
-		name = BucketName
+		name = bucketName
 	}
 	bucket, err := client.Bucket(name)
 	if err != nil {

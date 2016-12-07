@@ -13,30 +13,12 @@ import (
 	"time"
 )
 
-var (
-	accessKeyId     string
-	accessKeySecret string
-	host            string
-	expire_time     int64 = 60
-)
-
 const (
 	base64Table = "123QRSTUabcdVWXYZHijKLAWDCABDstEFGuvwxyzGHIJklmnopqr234560178912"
 )
 
 var coder = base64.NewEncoding(base64Table)
 
-// 设置上传信息
-// @key  accessKeyId
-// @secret accessKeySecret
-// @h 上传路径
-// @expire 有效时间
-func SetOss(key string, secret string, h string, expire int64) {
-	accessKeyId = key
-	accessKeySecret = secret
-	host = h
-	expire_time = expire
-}
 func base64Encode(src []byte) []byte {
 	return []byte(coder.EncodeToString(src))
 }
@@ -61,8 +43,12 @@ type PolicyToken struct {
 }
 
 // 获取上传验证信息
+// @  accessKeyId
+// @ accessKeySecret
+// @host 上传路径
+// @expire_time 有效时间
 // upload_dir ： 上传目录
-func GetToken(upload_dir string) PolicyToken {
+func GetToken(accessKeyId string, accessKeySecret string, host string, expire_time int64, upload_dir string) PolicyToken {
 	now := time.Now().Unix()
 	expire_end := now + expire_time
 	var tokenExpire = get_gmt_iso8601(expire_end)
