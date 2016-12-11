@@ -48,7 +48,7 @@ type PolicyToken struct {
 // @host 上传路径
 // @expire_time 有效时间
 // upload_dir ： 上传目录
-func GetToken(accessKeyId string, accessKeySecret string, host string, expire_time int64, upload_dir string) PolicyToken {
+func GetOssPolicyToken(accessKeyId string, accessKeySecret string, host string, expire_time int64, upload_dir string) PolicyToken {
 	now := time.Now().Unix()
 	expire_end := now + expire_time
 	var tokenExpire = get_gmt_iso8601(expire_end)
