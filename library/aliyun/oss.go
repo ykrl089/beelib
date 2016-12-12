@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"github.com/astaxie/beego"
 	"mime/multipart"
 )
 
@@ -28,6 +29,7 @@ func init() {
 	}
 }
 func SetClient() error {
+	var err error
 	if client, err = oss.New(endpoint, accessKeyID, accessKeySecret); err != nil {
 		return err
 	} else {

@@ -6,10 +6,10 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+
 	"hash"
 	"io"
-	"net/http"
+
 	"time"
 )
 
@@ -63,7 +63,7 @@ func GetToken(accessKeyId string, accessKeySecret string, host string, expire_ti
 	config.Conditions = append(config.Conditions, condition)
 
 	//calucate signature
-	result, err := json.Marshal(config)
+	result, _ := json.Marshal(config)
 	debyte := base64.StdEncoding.EncodeToString(result)
 	h := hmac.New(func() hash.Hash { return sha1.New() }, []byte(accessKeySecret))
 	io.WriteString(h, debyte)
